@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Local Cleanup Studio — AI Watermark & Object Remover</title>
+  <link rel="stylesheet" href="/static/style.css?v=2.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="dark-theme">
+  <div class="app-container">
+    <!-- LEFT SIDEBAR -->
+    <aside class="left-sidebar">
+      <div class="brand-logo" title="Local Cleanup Studio v2.0">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+          </svg>
+        </div>
+      </div>
+      
+      <div class="sidebar-category-label">CATEGORIES</div>
+
+      <nav class="sidebar-nav">
+        <!-- 1. IMAGE MODE -->
+        <button class="nav-item" data-mode="image" id="navImage" title="Image Watermark Remover">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+        </button>
+
+        <!-- 2. TEXT / SUBTITLE REMOVER -->
+        <button class="nav-item" data-mode="text" id="navText" title="Text & Subtitle Remover">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+            <polyline points="4 7 4 4 20 4 20 7"></polyline>
+            <line x1="9" y1="20" x2="15" y2="20"></line>
+            <line x1="12" y1="4" x2="12" y2="20"></line>
+          </svg>
+        </button>
+
+        <!-- 3. MAGIC INPAINTING -->
+        <button class="nav-item" data-mode="magic" id="navMagic" title="Magic Object Remover">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M15 4V2m0 16v-2M8 9h2m10 0h2m-4.2 4.2l1.4 1.4M6.8 6.8L5.4 5.4m11.8 0l1.4 1.4M6.8 17.2l-1.4 1.4"></path>
+          </svg>
+        </button>
+
+        <!-- 4. VIDEO WATERMARK REMOVER (DEFAULT ACTIVE) -->
+        <button class="nav-item active" data-mode="video" id="navVideo" title="Video Watermark Remover">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+            <polygon points="23 7 16 12 23 17 23 7"></polygon>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+          </svg>
+        </button>
+
+        <!-- 5. BATCH PROCESSING -->
+        <button class="nav-item" data-mode="batch" id="navBatch" title="Batch Processing">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+        </button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <button class="nav-item theme-toggle" id="themeToggle" title="Toggle Dark/Light Mode">
+          <svg id="themeIcon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- CENTER WORKSPACE -->
+    <main class="main-workspace">
+      <!-- UPLOAD STATE (WHEN NO MEDIA LOADED) -->
+      <div id="uploadDropzone" class="upload-dropzone">
+        <div class="dropzone-content">
+          <div class="upload-icon-circle">
+            <svg viewBox="0 0 24 24" width="36" height="36" stroke="#38bdf8" stroke-width="2" fill="none">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+          </div>
+          <h2 id="dropzoneTitle">Open Video to Remove Watermark</h2>
+          <p id="dropzoneSubtitle">Drag and drop MP4, MOV, WebM, AVI, or click below</p>
+          <label class="btn-browse">
+            Choose File
+            <input type="file" id="fileInput" accept="video/*" hidden>
+          </label>
+        </div>
+      </div>
+
+      <!-- ACTIVE MEDIA EDITOR (WHEN FILE LOADED) -->
+      <div id="editorWorkspace" class="editor-workspace" style="display: none;">
+        <div class="media-stage-wrapper" id="stageWrapper">
+          <!-- Video Element -->
+          <video id="videoPlayer" class="media-element" playsinline></video>
+          <!-- Image Element (for images) -->
+          <img id="imageElement" class="media-element" style="display: none;" alt="Preview">
+
+          <!-- Direct Interactive Bounding Box Overlay -->
+          <div id="selectionOverlay" class="selection-overlay">
+            <div id="boundingBox" class="bounding-box" style="display: none;">
+              <!-- 3x3 Rule-of-Thirds Grid Lines -->
+              <div class="grid-line grid-h1"></div>
+              <div class="grid-line grid-h2"></div>
+              <div class="grid-line grid-v1"></div>
+              <div class="grid-line grid-v2"></div>
+
+              <!-- 8 Resize Handles -->
+              <div class="handle handle-nw" data-handle="nw"></div>
+              <div class="handle handle-n" data-handle="n"></div>
+              <div class="handle handle-ne" data-handle="ne"></div>
+              <div class="handle handle-e" data-handle="e"></div>
+              <div class="handle handle-se" data-handle="se"></div>
+              <div class="handle handle-s" data-handle="s"></div>
+              <div class="handle handle-sw" data-handle="sw"></div>
+              <div class="handle handle-w" data-handle="w"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Video Player Timeline Controls -->
+        <div id="videoControls" class="video-controls-bar">
+          <button id="btnPlayPause" class="ctrl-btn" title="Play/Pause">
+            <svg id="playIcon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <svg id="pauseIcon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" style="display: none;">
+              <rect x="6" y="4" width="4" height="16"></rect>
+              <rect x="14" y="4" width="4" height="16"></rect>
+            </svg>
+          </button>
+
+          <span id="timeCurrent" class="time-label">00:00.0</span>
+          <input type="range" id="timelineSlider" class="timeline-slider" min="0" max="100" value="0" step="0.05">
+          <span id="timeTotal" class="time-label">00:00.0</span>
+
+          <button id="btnChangeMedia" class="ctrl-btn-text" title="Upload another file">Change File</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- RIGHT CONTROLS PANEL -->
+    <aside class="right-panel">
+      <div class="right-panel-header">
+        <h3 id="panelModeTitle" class="panel-mode-title">Video Cleanup</h3>
+        <p id="instructionText" class="instruction-text">
+          Select the area you want to remove. The watermark will be removed from every frame.
+        </p>
+      </div>
+
+      <!-- MORE OPTIONS ACCORDION -->
+      <div class="options-accordion">
+        <button id="accordionToggle" class="accordion-header">
+          <span>More options</span>
+          <span id="accordionIcon" class="accordion-icon">+</span>
+        </button>
+
+        <div id="accordionBody" class="accordion-body" style="display: none;">
+          <div class="option-group">
+            <label class="option-label">Inpainting Model</label>
+            <div class="radio-pill-group">
+              <label class="radio-pill">
+                <input type="radio" name="modelChoice" value="AI LaMa" checked>
+                <span>AI LaMa</span>
+              </label>
+              <label class="radio-pill">
+                <input type="radio" name="modelChoice" value="OpenCV Telea">
+                <span>OpenCV</span>
+              </label>
+            </div>
+            <span class="option-hint">AI LaMa gives photorealistic neural fill; OpenCV is instant.</span>
+          </div>
+
+          <div class="option-group" id="teleaRadiusGroup" style="display: none;">
+            <div class="option-header-row">
+              <label class="option-label">Telea Inpaint Radius</label>
+              <span id="radiusVal" class="val-badge">5px</span>
+            </div>
+            <input type="range" id="radiusInput" min="1" max="15" value="5" step="1" class="slider-input">
+          </div>
+
+          <div class="option-group">
+            <div class="option-header-row">
+              <label class="option-label">Edge Feathering (Blend)</label>
+              <span id="featherVal" class="val-badge">3px</span>
+            </div>
+            <input type="range" id="featherInput" min="0" max="10" value="3" step="1" class="slider-input">
+            <span class="option-hint">Smooths borders to prevent seams with untouched original background.</span>
+          </div>
+
+          <div class="option-group">
+            <div class="option-header-row">
+              <label class="option-label">Mask Padding</label>
+              <span id="paddingVal" class="val-badge">2px</span>
+            </div>
+            <input type="range" id="paddingInput" min="0" max="10" value="2" step="1" class="slider-input">
+            <span class="option-hint">Expands bounding box outward slightly to catch translucent text edges.</span>
+          </div>
+
+          <div class="option-group" id="crfGroup">
+            <div class="option-header-row">
+              <label class="option-label">Video Quality (CRF)</label>
+              <span id="crfVal" class="val-badge">18</span>
+            </div>
+            <input type="range" id="crfInput" min="14" max="28" value="18" step="1" class="slider-input">
+            <span class="option-hint">14 = Visually Lossless, 18 = High Quality, 23 = Standard.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTION BUTTONS -->
+      <div class="action-buttons-group">
+        <button id="btnRemoveWatermark" class="btn-primary-action">
+          Remove Watermark
+        </button>
+        <button id="btnReset" class="btn-secondary-action">
+          Reset
+        </button>
+      </div>
+
+      <!-- INSTANT 1-FRAME TEST BUTTON -->
+      <div class="test-frame-row">
+        <button id="btnTestFrame" class="btn-test-action" title="Verify watermark inpainting on this 1 frame in ~1 second">
+          ⚡ Quick Test on Current Frame
+        </button>
+      </div>
+
+      <!-- PROGRESS & STATUS CARD -->
+      <div id="progressCard" class="progress-card" style="display: none;">
+        <div class="progress-title-row">
+          <span id="progressTitle">Processing Media...</span>
+          <span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar-track">
+          <div id="progressBarFill" class="progress-bar-fill" style="width: 0%;"></div>
+        </div>
+        <div id="progressSubtext" class="progress-subtext">Initializing frames...</div>
+      </div>
+
+      <!-- RESULT CARD -->
+      <div id="resultCard" class="result-card" style="display: none;">
+        <div class="result-header">
+          <span class="result-badge">✓ Complete</span>
+          <span id="resultInfo">Cleaned file ready</span>
+        </div>
+        <div id="resultPreviewContainer" class="result-preview-box">
+          <!-- Dynamically populated with result video or image -->
+        </div>
+        <a id="btnDownloadResult" class="btn-download-action" href="#" download>
+          💾 Download Repaired Media
+        </a>
+      </div>
+
+      <!-- FLOATING FEEDBACK PILL -->
+      <button class="feedback-pill" title="Send Feedback">
+        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+        </svg>
+        <span>Feedback Board</span>
+      </button>
+    </aside>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
